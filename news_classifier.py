@@ -11,7 +11,6 @@ from sklearn.naive_bayes import GaussianNB
 import pandas as pd
 
 # modified from Documents/building-features-text-data/code
-# need to understand what to do first
 # in this example, the label is Y, X is text from the dbpedia part
 
 # http://localhost:8888/notebooks/Documents/building-features-text-data/code/12b-Stemmer_HashingVectorizer_NaiveBayesClassifier.ipynb
