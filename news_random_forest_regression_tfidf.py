@@ -6,8 +6,6 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.feature_extraction import text
 from nltk.stem.snowball import SnowballStemmer
 import re
-from nltk.stem import WordNetLemmatizer
-from sklearn.naive_bayes import GaussianNB
 
 from nltk.tokenize import word_tokenize
 from nltk.probability import FreqDist
@@ -18,6 +16,11 @@ from nltk.stem import WordNetLemmatizer
 
 import pandas as pd
 
+class LemmaTokenizer:
+    def __init__(self):
+        self.wnl = WordNetLemmatizer()
+    def __call__(self, doc):
+        return [self.wnl.lemmatize(t) for t in word_tokenize(doc)]
 
 def stemmed_words(doc):
     return (stemmer.stem(w) for w in analyzer(doc))
@@ -25,12 +28,9 @@ def stemmed_words(doc):
 def summarize_classification(y_test, y_pred):
     rmse = mean_squared_error(y_test, y_pred, squared=False)
     mse = mean_squared_error(y_test, y_pred, squared=True)
-
     print("Length of testing data: ", len(y_test))
     print("root mean squared error: ", rmse)
     print("mean squared error: ", mse)
-
-
 
 stemmer = SnowballStemmer('english')
 analyzer = HashingVectorizer().build_analyzer()
@@ -117,7 +117,8 @@ stop_words = text.ENGLISH_STOP_WORDS.union(frequent_words)
 #processed_features = stem_vectorizer.transform(documents)
 
 #vectorizer = TfidfVectorizer(max_features=2500, min_df=7, max_df=0.8, analyzer=stemmed_words, stop_words=stop_words)
-vectorizer = TfidfVectorizer(max_features=2500, analyzer=stemmed_words, max_df=0.7, stop_words=stop_words)
+#vectorizer = TfidfVectorizer(max_features=2500, analyzer=stemmed_words, max_df=0.8, stop_words=stop_words)
+vectorizer = TfidfVectorizer(tokenizer=LemmaTokenizer(), max_features=2500, analyzer=stemmed_words, max_df=0.8, stop_words=stop_words)
 
 processed_features = vectorizer.fit_transform(documents)
 
