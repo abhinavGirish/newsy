@@ -5,8 +5,13 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 
 from sklearn.feature_extraction.text import HashingVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.feature_extraction import text
 from nltk.stem.snowball import SnowballStemmer
 from sklearn.naive_bayes import GaussianNB
+
+from nltk.tokenize import word_tokenize
+from nltk.probability import FreqDist
 
 import pandas as pd
 
@@ -34,12 +39,27 @@ def summarize_classification(y_test, y_pred):
 stemmer = SnowballStemmer('english')
 analyzer = HashingVectorizer().build_analyzer()
 
-stem_vectorizer = HashingVectorizer(n_features=2**10, norm='l2', analyzer=stemmed_words)
+
+
 
 df = pd.read_csv('./archive/nyt-articles-2020.csv')
 
 X = df['headline']
 Y = df['n_comments']
+
+# frequency filtering
+tokens = word_tokenize("\n".join(X.values))
+freq = FreqDist(tokens)
+frequent_words = []
+
+for key, value in freq.items():
+    if value >= 100:
+        frequent_words.append(key.lower())
+
+stop_words = text.ENGLISH_STOP_WORDS.union(frequent_words)
+
+#stem_vectorizer = HashingVectorizer(n_features=2**10, norm='l2', analyzer=stemmed_words, ngram_range=(2,5)) #34 acc count
+stem_vectorizer = HashingVectorizer(n_features=2**10, norm='l2', ngram_range=(2,3), stop_words=stop_words) #38 acc count
 
 feature_vector = stem_vectorizer.transform(X)
 
@@ -59,5 +79,8 @@ clf = GaussianNB().fit(x_train, y_train)
 
 y_pred = clf.predict(x_test)
 y_pred
+
+print(y_test)
+print(y_pred)
 
 summarize_classification(y_test, y_pred)
