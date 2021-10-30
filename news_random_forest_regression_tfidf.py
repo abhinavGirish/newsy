@@ -5,7 +5,10 @@ from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.feature_extraction import text
 from nltk.stem.snowball import SnowballStemmer
+from sklearn.model_selection import RandomizedSearchCV
 import re
+import nltk
+import numpy as np
 
 from nltk.tokenize import word_tokenize
 from nltk.probability import FreqDist
@@ -13,6 +16,7 @@ from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from nltk.stem import WordNetLemmatizer
+from pprint import pprint
 
 import pandas as pd
 
@@ -32,6 +36,7 @@ def summarize_classification(y_test, y_pred):
     print("root mean squared error: ", rmse)
     print("mean squared error: ", mse)
 
+nltk.download('wordnet')
 stemmer = SnowballStemmer('english')
 analyzer = HashingVectorizer().build_analyzer()
 
@@ -111,7 +116,8 @@ for key, value in freq.items():
     if value >= 200:
         frequent_words.append(key.lower())
 
-stop_words = text.ENGLISH_STOP_WORDS.union(frequent_words)
+#stop_words = text.ENGLISH_STOP_WORDS.union(frequent_words)
+stop_words = text.ENGLISH_STOP_WORDS
 
 #stem_vectorizer = HashingVectorizer(n_features=2**10, norm='l2', stop_words=stop_words, analyzer=stemmed_words)
 #processed_features = stem_vectorizer.transform(documents)
@@ -119,6 +125,39 @@ stop_words = text.ENGLISH_STOP_WORDS.union(frequent_words)
 #vectorizer = TfidfVectorizer(max_features=2500, min_df=7, max_df=0.8, analyzer=stemmed_words, stop_words=stop_words)
 #vectorizer = TfidfVectorizer(max_features=2500, analyzer=stemmed_words, max_df=0.8, stop_words=stop_words)
 vectorizer = TfidfVectorizer(tokenizer=LemmaTokenizer(), max_features=2500, analyzer=stemmed_words, max_df=0.8, stop_words=stop_words)
+# vectorizer = TfidfVectorizer(tokenizer=LemmaTokenizer(), max_features=2500, max_df=0.8, stop_words=stop_words)
+# vectorizer = TfidfVectorizer(tokenizer=LemmaTokenizer(), max_features=2500, max_df=0.95, stop_words=stop_words)
+
+#vectorizer = TfidfVectorizer(tokenizer=LemmaTokenizer(), max_features=250, max_df=0.95, stop_words=stop_words)
+
+
+# create the parameter grid:
+n_estimators = [int(x) for x in np.linspace(start = 200, stop = 2000, num = 10)]
+
+# Number of trees in random forest
+n_estimators = [int(x) for x in np.linspace(start = 200, stop = 2000, num = 10)]
+# Number of features to consider at every split
+max_features = ['auto', 'sqrt']
+# Maximum number of levels in tree
+max_depth = [int(x) for x in np.linspace(10, 110, num = 11)]
+max_depth.append(None)
+# Minimum number of samples required to split a node
+min_samples_split = [2, 5, 10]
+# Minimum number of samples required at each leaf node
+min_samples_leaf = [1, 2, 4]
+# Method of selecting samples for training each tree
+bootstrap = [True, False]
+
+# Create the random grid
+random_grid = {'n_estimators': n_estimators,
+               'max_features': max_features,
+               'max_depth': max_depth,
+               'min_samples_split': min_samples_split,
+               'min_samples_leaf': min_samples_leaf,
+               'bootstrap': bootstrap}
+
+pprint(random_grid)
+
 
 processed_features = vectorizer.fit_transform(documents)
 
@@ -142,6 +181,7 @@ x_train.shape, x_test.shape
 y_train.shape, y_test.shape
 
 rgr = RandomForestRegressor(n_estimators=50)
+rf_random = RandomizedSearchCV(estimator = rgr, param_distributions = random_grid, n_iter = 100, cv = 3, verbose=2, random_state=42, n_jobs = -1)
 
 print("random forest regressor created")
 
