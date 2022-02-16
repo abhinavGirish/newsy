@@ -36,33 +36,29 @@ def summarize_classification(y_test, y_pred):
     print("root mean squared error: ", rmse)
     print("mean squared error: ", mse)
 
+    # alternative error computation
+    errors = abs(y_pred - y_test)
+    mape = 100 * np.mean(errors / y_test)
+    accuracy = 100 - mape
+    print("Model Performance")
+    print("Average Error: {:0.4f} degrees.".format(np.mean(errors)))
+    print('Accuracy = {:0.2f}%'.format(accuracy))
+
+
 nltk.download('wordnet')
 stemmer = SnowballStemmer('english')
 analyzer = HashingVectorizer().build_analyzer()
 
-#df = pd.read_csv('./archive/nyt-articles-2020.csv', encoding="ISO-8859-1")
 df = pd.read_csv('./archive/modified.csv', encoding="ISO-8859-1")
-#df = pd.read_csv('./archive/modified2.csv', encoding="ISO-8859-1")
 
 df.dropna(subset = ['abstract'], inplace=True)
-#df.dropna(subset = ['headline'], inplace=True)
 
 X = df['abstract']
-#X = df['headline']
 Y = df['n_comments']
-
-print("X : ")
-print(str(X))
-
-print("Y : ")
-print(str(type(Y)))
 
 documents = []
 
 # text preprocessing
-print("length of X: " + str(len(X)))
-print("shape of X: " + str(X.shape))
-print("shape of Y: " + str(Y.shape))
 
 Y_modified = pd.DataFrame()
 
@@ -101,9 +97,7 @@ for sen in range(0, len(X)):
         #print("document: " + document)
 
         Y_modified = Y_modified.append({'n_comments': Y[sen]}, ignore_index=True)
-    # else:
-    #     print("row from Y that needs to be dropped: " + Y[sen])
-    #     #Y = Y.drop(labels=sen, axis=0)
+
 
 # frequency filtering
 
@@ -116,20 +110,9 @@ for key, value in freq.items():
     if value >= 200:
         frequent_words.append(key.lower())
 
-#stop_words = text.ENGLISH_STOP_WORDS.union(frequent_words)
 stop_words = text.ENGLISH_STOP_WORDS
 
-#stem_vectorizer = HashingVectorizer(n_features=2**10, norm='l2', stop_words=stop_words, analyzer=stemmed_words)
-#processed_features = stem_vectorizer.transform(documents)
-
-#vectorizer = TfidfVectorizer(max_features=2500, min_df=7, max_df=0.8, analyzer=stemmed_words, stop_words=stop_words)
-#vectorizer = TfidfVectorizer(max_features=2500, analyzer=stemmed_words, max_df=0.8, stop_words=stop_words)
 vectorizer = TfidfVectorizer(tokenizer=LemmaTokenizer(), max_features=2500, analyzer=stemmed_words, max_df=0.8, stop_words=stop_words)
-# vectorizer = TfidfVectorizer(tokenizer=LemmaTokenizer(), max_features=2500, max_df=0.8, stop_words=stop_words)
-# vectorizer = TfidfVectorizer(tokenizer=LemmaTokenizer(), max_features=2500, max_df=0.95, stop_words=stop_words)
-
-#vectorizer = TfidfVectorizer(tokenizer=LemmaTokenizer(), max_features=250, max_df=0.95, stop_words=stop_words)
-
 
 # create the parameter grid:
 n_estimators = [int(x) for x in np.linspace(start = 200, stop = 2000, num = 10)]
@@ -168,9 +151,6 @@ X_dense = processed_features.todense()
 
 X_dense.shape
 
-print("Y modified: " + str(Y_modified.shape))
-print("X : " + str(X_dense.shape))
-
 print("Y type " + str(type(Y_modified)))
 print("X type " + str(type(X_dense)))
 
@@ -180,17 +160,22 @@ x_train.shape, x_test.shape
 
 y_train.shape, y_test.shape
 
-rgr = RandomForestRegressor(n_estimators=50)
-rf_random = RandomizedSearchCV(estimator = rgr, param_distributions = random_grid, n_iter = 100, cv = 3, verbose=2, random_state=42, n_jobs = -1)
+rgr = RandomForestRegressor()
+rf_random = RandomizedSearchCV(estimator = rgr, param_distributions = random_grid, n_iter = 5, cv = 3, verbose=2, random_state=42, n_jobs = -1)
 
 print("random forest regressor created")
 
-clf_rgr = rgr.fit(x_train, y_train)
-y_pred_rgr = clf_rgr.predict(x_test)
+rf_random.fit(x_train, y_train)
+rf_random.best_params_
+best_random = rf_random.best_estimator_
+y_pred_rgr = best_random.predict(x_test)
 
 print("y values predicted")
 
 print(y_test)
 print(y_pred_rgr)
+
+# y_pred_rgr = predictions
+# y_test = test_labels
 
 summarize_classification(y_test, y_pred_rgr)
