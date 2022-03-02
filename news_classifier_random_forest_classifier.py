@@ -52,9 +52,10 @@ analyzer = HashingVectorizer().build_analyzer()
 
 df = pd.read_csv('./archive/modified.csv', encoding="ISO-8859-1")
 
-df.dropna(subset = ['abstract'], inplace=True)
+df.dropna(subset = ['abstract','headline'], inplace=True)
 
 X = df['abstract']
+X_headline = df['headline']
 Y = df['clickbait_category_4']
 
 documents = []
@@ -67,9 +68,19 @@ Y_modified = pd.DataFrame()
 for sen in range(0, len(X)):
     # Remove all the special characters
 
-    doc = X.get(sen)
+    headline = X_headline.get(sen)
+    abstract = X.get(sen)
+    """if headline is None:
+        headline = ""
 
-    if doc:
+    if abstract is None:
+        abstract = "" """
+
+    #doc = headline + " : " + X.get(sen)
+
+    if not(headline is None) and not(abstract is None):
+
+        doc = headline + " : " + abstract
         document = re.sub(r'\W', ' ', str(doc))
 
         # remove all single characters
@@ -116,7 +127,7 @@ stop_words = text.ENGLISH_STOP_WORDS
 vectorizer = TfidfVectorizer(tokenizer=LemmaTokenizer(), max_features=2500, analyzer=stemmed_words, max_df=0.8, stop_words=stop_words)
 
 # create the parameter grid:
-n_estimators = [int(x) for x in np.linspace(start = 200, stop = 2000, num = 10)]
+"""n_estimators = [int(x) for x in np.linspace(start = 200, stop = 2000, num = 10)]
 
 # Number of trees in random forest
 n_estimators = [int(x) for x in np.linspace(start = 200, stop = 2000, num = 10)]
@@ -140,20 +151,16 @@ random_grid = {'n_estimators': n_estimators,
                'min_samples_leaf': min_samples_leaf,
                'bootstrap': bootstrap}
 
-pprint(random_grid)
+pprint(random_grid)"""
 
 
 processed_features = vectorizer.fit_transform(documents)
-
 
 processed_features.shape
 
 X_dense = processed_features.todense()
 
 X_dense.shape
-
-print("Y type " + str(type(Y_modified)))
-print("X type " + str(type(X_dense)))
 
 x_train, x_test, y_train, y_test = train_test_split(X_dense, Y_modified['clickbait_category_4'], test_size = 0.2) # old was 0.2
 
