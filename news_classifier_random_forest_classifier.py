@@ -55,7 +55,7 @@ df = pd.read_csv('./archive/modified.csv', encoding="ISO-8859-1")
 df.dropna(subset = ['abstract'], inplace=True)
 
 X = df['abstract']
-Y = df['clickbait_category_3']
+Y = df['clickbait_category_4']
 
 documents = []
 
@@ -97,7 +97,7 @@ for sen in range(0, len(X)):
 
         #print("document: " + document)
 
-        Y_modified = Y_modified.append({'clickbait_category_3': Y[sen]}, ignore_index=True)
+        Y_modified = Y_modified.append({'clickbait_category_4': Y[sen]}, ignore_index=True)
 
 
 # frequency filtering
@@ -155,7 +155,7 @@ X_dense.shape
 print("Y type " + str(type(Y_modified)))
 print("X type " + str(type(X_dense)))
 
-x_train, x_test, y_train, y_test = train_test_split(X_dense, Y_modified['clickbait_category_3'], test_size = 0.2) # old was 0.2
+x_train, x_test, y_train, y_test = train_test_split(X_dense, Y_modified['clickbait_category_4'], test_size = 0.2) # old was 0.2
 
 x_train.shape, x_test.shape
 
