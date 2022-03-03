@@ -127,7 +127,6 @@ stop_words = text.ENGLISH_STOP_WORDS
 vectorizer = TfidfVectorizer(tokenizer=LemmaTokenizer(), max_features=2500, analyzer=stemmed_words, max_df=0.8, stop_words=stop_words)
 
 # create the parameter grid:
-"""n_estimators = [int(x) for x in np.linspace(start = 200, stop = 2000, num = 10)]
 
 # Number of trees in random forest
 n_estimators = [int(x) for x in np.linspace(start = 200, stop = 2000, num = 10)]
@@ -151,7 +150,7 @@ random_grid = {'n_estimators': n_estimators,
                'min_samples_leaf': min_samples_leaf,
                'bootstrap': bootstrap}
 
-pprint(random_grid)"""
+pprint(random_grid)
 
 
 processed_features = vectorizer.fit_transform(documents)
@@ -162,17 +161,19 @@ X_dense = processed_features.todense()
 
 X_dense.shape
 
-x_train, x_test, y_train, y_test = train_test_split(X_dense, Y_modified['clickbait_category_4'], test_size = 0.2) # old was 0.2
+x_train, x_test, y_train, y_test = train_test_split(X_dense, Y_modified['clickbait_category_4'], test_size = 0.2)
 
 x_train.shape, x_test.shape
 
 y_train.shape, y_test.shape
 
-#rgr = RandomForestRegressor()
-#rf_random = RandomizedSearchCV(estimator = rgr, param_distributions = random_grid, n_iter = 5, cv = 3, verbose=2, random_state=42, n_jobs = -1)
-
 clf = RandomForestClassifier(n_estimators = 100)
-clf.fit(x_train, y_train)
-y_pred = clf.predict(x_test)
+
+clf_random_search = RandomizedSearchCV(estimator=clf, param_distributions = random_grid, n_iter=5,
+                                       cv=3, verbose=2, random_state=42, n_jobs = -1).fit(x_train, y_train)
+
+
+#clf_random_search.fit(x_train, y_train)
+y_pred = clf_random_search.predict(x_test)
 
 print("ACCURACY OF THE MODEL : ", metrics.accuracy_score(y_test, y_pred))
