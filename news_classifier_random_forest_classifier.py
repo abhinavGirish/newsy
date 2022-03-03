@@ -3,6 +3,8 @@ from sklearn.metrics import mean_squared_error
 
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+from sklearn.experimental import enable_halving_search_cv
+from sklearn.model_selection import HalvingGridSearchCV
 from sklearn.feature_extraction import text
 from nltk.stem.snowball import SnowballStemmer
 from sklearn.model_selection import RandomizedSearchCV
@@ -56,6 +58,7 @@ df.dropna(subset = ['abstract','headline'], inplace=True)
 
 X = df['abstract']
 X_headline = df['headline']
+X_section = df['section']
 Y = df['clickbait_category_4']
 
 documents = []
@@ -70,6 +73,7 @@ for sen in range(0, len(X)):
 
     headline = X_headline.get(sen)
     abstract = X.get(sen)
+    section = X_section.get(sen)
     """if headline is None:
         headline = ""
 
@@ -78,9 +82,9 @@ for sen in range(0, len(X)):
 
     #doc = headline + " : " + X.get(sen)
 
-    if not(headline is None) and not(abstract is None):
+    if not(headline is None) and not(abstract is None) and not(section is None):
 
-        doc = headline + " : " + abstract
+        doc = section + " : " + headline + " : " + abstract
         document = re.sub(r'\W', ' ', str(doc))
 
         # remove all single characters
@@ -143,7 +147,9 @@ min_samples_leaf = [1, 2, 4]
 bootstrap = [True, False]
 
 # Create the random grid
-random_grid = {'n_estimators': n_estimators,
+# 'n_estimators': n_estimators,
+
+random_grid = {
                'max_features': max_features,
                'max_depth': max_depth,
                'min_samples_split': min_samples_split,
@@ -169,9 +175,11 @@ y_train.shape, y_test.shape
 
 clf = RandomForestClassifier(n_estimators = 100)
 
-clf_random_search = RandomizedSearchCV(estimator=clf, param_distributions = random_grid, n_iter=5,
-                                       cv=3, verbose=2, random_state=42, n_jobs = -1).fit(x_train, y_train)
+"""clf_random_search = RandomizedSearchCV(estimator=clf, param_distributions = random_grid, n_iter=5,
+                                       cv=3, verbose=2, random_state=42, n_jobs = -1).fit(x_train, y_train) """
 
+clf_random_search = HalvingGridSearchCV(estimator=clf, param_grid = random_grid, cv=3, factor=2,
+                                        resource='n_estimators',max_resources=30).fit(x_train, y_train)
 
 #clf_random_search.fit(x_train, y_train)
 y_pred = clf_random_search.predict(x_test)
