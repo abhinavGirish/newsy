@@ -2,21 +2,16 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 
 from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
-from sklearn.experimental import enable_halving_search_cv
-from sklearn.model_selection import HalvingGridSearchCV
 from sklearn.feature_extraction import text
 from nltk.stem.snowball import SnowballStemmer
-from sklearn.model_selection import RandomizedSearchCV
 import re
 import nltk
 import numpy as np
 
 from nltk.tokenize import word_tokenize
 from nltk.probability import FreqDist
-from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn import metrics
+
 
 from nltk.stem import WordNetLemmatizer
 from pprint import pprint
@@ -74,13 +69,6 @@ for sen in range(0, len(X)):
     headline = X_headline.get(sen)
     abstract = X.get(sen)
     section = X_section.get(sen)
-    """if headline is None:
-        headline = ""
-
-    if abstract is None:
-        abstract = "" """
-
-    #doc = headline + " : " + X.get(sen)
 
     if not(headline is None) and not(abstract is None) and not(section is None):
 
@@ -171,19 +159,20 @@ X_dense.shape
 
 x_train, x_test, y_train, y_test = train_test_split(X_dense, Y_modified['clickbait_category_4'], test_size = 0.2)
 
-x_train.shape, x_test.shape
+reshaped_y_train = np.reshape(y_train.to_numpy(),(-1,1))
+reshaped_y_test = np.reshape(y_test.to_numpy(),(-1,1))
 
-y_train.shape, y_test.shape
+train = np.concatenate((x_train,reshaped_y_train),axis=1)
+test = np.concatenate((x_test,reshaped_y_test),axis=1)
 
-clf = RandomForestClassifier(n_estimators = 100)
+num_columns = train.shape[1]
+column_names = ['col'+ str(i) for i in range(num_columns-1)] + ['label']
 
-"""clf_random_search = RandomizedSearchCV(estimator=clf, param_distributions = random_grid, n_iter=5,
-                                       cv=3, verbose=2, random_state=42, n_jobs = -1).fit(x_train, y_train) """
+df_train = pd.DataFrame(train, columns=column_names)
+df_test = pd.DataFrame(test, columns=column_names)
 
-clf_random_search = HalvingGridSearchCV(estimator=clf, param_grid = random_grid, cv=3, factor=2,
-                                        resource='n_estimators',max_resources=30).fit(x_train, y_train)
+df_train.to_csv('train.csv', index=True, header=True, sep=',')
+df_test.to_csv('deploy_test.csv', index=True, header=True, sep=',')
 
-#clf_random_search.fit(x_train, y_train)
-y_pred = clf_random_search.predict(x_test)
-
-print("ACCURACY OF THE MODEL : ", metrics.accuracy_score(y_test, y_pred))
+#np.savetxt('train.csv',train,delimiter=",") # need to put labels on top - create a list of names 'col1','col2'....label
+#np.savetxt('deploy_test.csv',test,delimiter=",")
