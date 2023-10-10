@@ -1,1 +1,8 @@
 nltk
+django
+gunicorn
+psycopg2
+numpy
+pandas
+flask
+boto3

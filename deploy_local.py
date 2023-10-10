@@ -1,8 +1,12 @@
 from sagemaker.local import LocalSession
 from sagemaker.sklearn.estimator import SKLearnModel
+import logging
 
 sagemaker_session = LocalSession()
 sagemaker_session.config = {'local': {'local_code': True}}
+
+sagemaker_config_logger = logging.getLogger("sagemaker.config")
+sagemaker_config_logger.setLevel(logging.DEBUG)
 
 role = 'acgirish'
 
@@ -16,8 +20,9 @@ aws_sklearn_model = SKLearnModel(model_data="s3://sagemaker-us-east-2-4825230317
                              framework_version="1.0-1")
 
 aws_sklearn_predictor = aws_sklearn_model.deploy(instance_type='local',
-                                           initial_instance_count=1,
-                                           hyperparameters={'sock-file': '/tmp/gunicorn.sock'})
+                                           initial_instance_count=1)
+
+# instance_type = 'local'
 
 print(aws_sklearn_predictor.endpoint)
 
